@@ -8,3 +8,5 @@ pdfplumber
 spacy
 sentence-transformers
 scikit-learn
+python-dotenv
+requests
