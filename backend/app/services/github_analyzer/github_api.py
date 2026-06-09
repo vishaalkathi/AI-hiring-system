@@ -18,7 +18,7 @@ def get_user(username: str):
         raise Exception(f"User {username} not found. Status code: {response.status_code}")
     
 def get_repos(username: str):
-    url = f"{BASE_URL}/users/{username}/repos"
+    url = f"{BASE_URL}/users/{username}/repos?per_page=100"
     response = requests.get(url, headers=headers)
 
     if response.status_code == 200:
@@ -26,3 +26,4 @@ def get_repos(username: str):
     else:
         raise Exception(f"Could not fetch repositories for user {username}. Status code: {response.status_code}")
     
+#Implement pagination for get_repos since now its maxx 100 repos, if user has more than 100 repos we need to make multiple calls to get all repos. We can use the 'Link' header in the response to check if there are more pages of results. If there are, we can extract the URL for the next page and make another request until we've retrieved all repositories.
