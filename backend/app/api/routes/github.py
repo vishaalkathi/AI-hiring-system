@@ -1,42 +1,29 @@
 from fastapi import APIRouter, HTTPException
-from backend.app.services.github_analyzer.github_api import get_user, get_repos
-from backend.app.services.github_analyzer.repo_analyzer import extract_features
-from backend.app.services.github_analyzer.metrics import github_score
+from backend.app.services.github_analyzer.github_analyzer import GitHubAnalyzer
+
 import logging
 
 router = APIRouter()
+
+analyzer = GitHubAnalyzer()
 
 @router.get("/github-score/{username}")
 def get_github_score(username: str) -> dict:
     try:
         logging.info(f"[Github API] Request received for GitHub user: {username}")
-        user_data = get_user(username)
+        
+        result = analyzer.analyze(username)
 
-        if not user_data:
-            logging.error(f"[Github API] GitHub user '{username}' not found")
+        if not result["features"] or result["features"].get("error"):
+            logging.error(f"[GitHub API] User not found: {username}")
             raise HTTPException(
                 status_code=404,
                 detail=f"GitHub user '{username}' not found"
             )
-        
-        logging.info(f"[Github API] User data fetched for {username}")
-
-        repos = get_repos(username) or []
-        logging.info(f"[Github API] Repositories fetched for {username}: {len(repos)} repos found")
-
-        features = extract_features(user_data, repos)
-        logging.info(f"[Github API] Features extracted for {username}: {features}")
-
-        score = github_score(features)
-        logging.info(f"[Github API] Calculated GitHub score for {username}: {score}")
 
         return {
             "status": "success",
-            "data": {
-                "username": username,
-                "github_score": score,
-                "features": features
-            }
+            "data": result
         }
     except HTTPException:
         raise
