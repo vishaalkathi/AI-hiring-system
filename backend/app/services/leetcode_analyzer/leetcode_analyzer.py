@@ -1,5 +1,7 @@
 from backend.app.services.base_analyzer import BaseAnalyzer
 from .leetcode_api import fetch_leetcode_data
+from .leet_feature_extractor import extract_features as extract_leet_features
+
 
 class LeetCodeAnalyzer(BaseAnalyzer):
 
@@ -13,7 +15,16 @@ class LeetCodeAnalyzer(BaseAnalyzer):
         """
         Step 2: Convert raw LeetCode data → features
         """
-        # Placeholder for actual feature extraction logic
-        return {
-            "features": raw_data  # In real implementation, this would be processed features
-        }
+
+        if not raw_data:
+            return {
+                "error": "Failed to fetch data",
+                "leetcode_score": 0
+            }
+
+        if "error" in raw_data:
+            return {
+                "error": raw_data["error"],
+                "leetcode_score": 0
+            }
+        return extract_leet_features(raw_data)

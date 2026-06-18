@@ -44,5 +44,3 @@ def fetch_leetcode_data(username: str) -> dict:
             data[key] = response.get("data", {})  # Safely get 'data' or return empty dict if not present
      
      return data
-
-print(fetch_leetcode_data("pokobholu"))
