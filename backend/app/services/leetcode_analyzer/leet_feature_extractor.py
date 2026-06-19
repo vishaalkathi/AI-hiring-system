@@ -31,13 +31,15 @@ def extract_features(raw_data: dict) -> dict:
 
     try: 
         tag_data = raw_data.get("skillStats", {}).get("matchedUser", {}).get("tagProblemCounts", {})
-        features["dp_strength"] = self._extract_tag(tag_data, "Dynamic Programming")
-        features["graph_strength"] = self._extract_tag(tag_data, "Graphs")
-        features["greedy_strength"] = self._extract_tag(tag_data, "Greedy")
+
+        skill_stats = extract_all_tags(tag_data)
+        #normalized_features = normalize_features(skill_stats)
+
+        features["skill_stats"] = skill_stats
+        #features["normalized_features"] = normalized_features
     except Exception:
-        features["dp_strength"] = 0
-        features["graph_strength"] = 0
-        features["greedy_strength"] = 0
+        features["skill_stats"] = {}
+        #features["normalized_features"] = {}
     
     # -------------------------
     # 3. CONTEST DATA
@@ -64,7 +66,7 @@ def extract_features(raw_data: dict) -> dict:
     # -------------------------
 
     try:
-        progress = raw_data.get("progress", {}).get("matchedUser", {}).get("submitStats", {}).get("acSubmissionNum", [])
+        progress = raw_data.get("submissionStats", {}).get("matchedUser", {}).get("submitStats", {}).get("acSubmissionNum", [])
 
         features["total_solved"] = sum(x["count"] for x in progress if x["difficulty"] in ["Easy", "Medium", "Hard"])
 
@@ -102,9 +104,50 @@ def extract_features(raw_data: dict) -> dict:
 # -------------------------
 # helper function
 # -------------------------
-def _extract_tag(tag_data, tag_name):
+def extract_all_tags(tag_data: dict) -> dict:
+    """
+    Extract all LeetCode skill tags into a flat dictionary.
+    """
+    if not tag_data:
+        return {}
+
+    tag_features = {}
+
     for level in ["advanced", "intermediate", "fundamental"]:
         for item in tag_data.get(level, []):
-            if item.get("tagName") == tag_name:
-                return item.get("problemsSolved", 0)
-    return 0
+            tag_name = item.get("tagName")
+            count = item.get("problemsSolved", 0)
+
+            if tag_name:
+                key = tag_name.lower().replace(" ", "_")
+                tag_features[key] = count
+
+    return tag_features
+
+#-----------------------------------------------------
+#Fix this normalization for the ML model, we can add more rules here
+#-----------------------------------------------------
+def normalize_features(skill_stats: dict) -> dict:
+    """
+    Optional ML-friendly normalization layer.
+    You can expand this later with mapping rules.
+    """
+    if not skill_stats:
+        return {}
+
+    # simple aliasing (you can expand this later)
+    alias_map = {
+        "graph_theory": "graphs",
+        "breadth_first_search": "graphs",
+        "depth_first_search": "graphs",
+        "binary_tree": "trees",
+        "binary_search_tree": "trees",
+    }
+
+    normalized = {}
+
+    for k, v in skill_stats.items():
+        key = alias_map.get(k, k)
+        normalized[key] = normalized.get(key, 0) + v
+
+    return normalized
