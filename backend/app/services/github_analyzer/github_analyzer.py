@@ -33,6 +33,4 @@ class GitHubAnalyzer(BaseAnalyzer):
 
         features = extract_repo_features(user_data, repos)
 
-        return {
-            "features": features
-        }
+        return features
