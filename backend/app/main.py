@@ -2,11 +2,13 @@ from fastapi import FastAPI
 from backend.app.api.routes.github import router as github_router
 from backend.app.api.routes.leetcode import router as leetcode_router
 from backend.app.api.routes.candidate import router as candidate_router
+from backend.app.api.routes.match import router as match_router
 
 app = FastAPI()
 app.include_router(github_router, prefix="/api")
 app.include_router(leetcode_router, prefix="/api")
 app.include_router(candidate_router, prefix="/api")
+app.include_router(match_router, prefix="/api")
 
 @app.get("/")
 def root():
