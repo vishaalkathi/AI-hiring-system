@@ -4,6 +4,8 @@ from backend.app.services.registry import AnalyzerRegistry
 from backend.app.services.candidate_aggregator import CandidateAggregator
 from backend.app.services.scoring_engine_v1 import ScoringEngine
 
+from backend.app.models.candidate import Candidate
+
 router = APIRouter()
 
 @router.get("/candidate/{username}")
@@ -20,9 +22,17 @@ def get_candidate(username: str):
         # 2. AGGREGATE
         # -------------------------
         aggregator = CandidateAggregator()
-        candidate = aggregator.aggregate(
+        candidate_raw = aggregator.aggregate(
             raw_data.get("github", {}),
             raw_data.get("leetcode", {})
+        )
+
+        # convert dict → Pydantic model
+        candidate = Candidate(
+            username=username,
+            github=candidate_raw.get("github", {}),
+            leetcode=candidate_raw.get("leetcode", {}),
+            combined_features=candidate_raw.get("combined_features", {})
         )
 
         # -------------------------

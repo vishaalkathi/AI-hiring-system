@@ -1,26 +1,37 @@
 class CandidateAggregator:
-    def aggregate(self, github_features: dict, leetcode_features: dict) -> dict:
+    def aggregate(self, github_raw: dict, leetcode_raw: dict) -> dict:
 
-        combined = {}
+        # -------------------------
+        # NORMALIZE INPUT FIRST
+        # -------------------------
+        github = github_raw.get("features", github_raw)
+        leetcode = leetcode_raw.get("features", leetcode_raw)
 
-        #store raw sources
-        combined["github"] = github_features
-        combined["leetcode"] = leetcode_features
+        # -------------------------
+        # RAW STORAGE (optional debug)
+        # -------------------------
+        combined = {
+            "github": github,
+            "leetcode": leetcode
+        }
 
-        #combine into unified feature set
-        combined_features = {}
+        # -------------------------
+        # COMBINED FEATURES (ML VECTOR)
+        # -------------------------
+        combined_features = {
+            # LeetCode signals
+            "total_solved": leetcode.get("total_solved", 0),
+            "streak": leetcode.get("streak", 0),
+            "active_days": leetcode.get("active_days", 0),
 
-        # LeetCode signals
-        combined_features["total_solved"] = leetcode_features.get("features", {}).get("total_solved", 0)
-        combined_features["streak"] = leetcode_features.get("features", {}).get("streak", 0)
-        combined_features["active_days"] = leetcode_features.get("features", {}).get("active_days", 0)
+            "skill_stats": leetcode.get("skill_stats", {}),
+            "language_diversity": leetcode.get("language_diversity", 0),
 
-        combined_features["skill_stats"] = leetcode_features.get("features", {}).get("skill_stats", {})
-        combined_features["language_diversity"] = leetcode_features.get("features", {}).get("language_diversity", 0)
-
-        # GitHub signals
-        combined_features["repo_count"] = github_features.get("features", {}).get("public_repos", 0)
-        combined_features["github_stars"] = github_features.get("features", {}).get("total_stars", 0)
+            # GitHub signals
+            "repo_count": github.get("public_repos", 0),
+            "github_stars": github.get("total_stars", 0),
+            "github_followers": github.get("followers", 0),
+        }
 
         combined["combined_features"] = combined_features
 

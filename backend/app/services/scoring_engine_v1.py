@@ -1,52 +1,51 @@
 import math
+from backend.app.models.candidate import Candidate
 
 class ScoringEngine:
 
-    def compute_score(self, candidate: dict) -> dict:
+    def compute_score(self, candidate: Candidate) -> dict:
 
-        f = candidate["combined_features"]
+        f = candidate.combined_features
+        github = candidate.github
+        leetcode = candidate.leetcode
 
         #DSA SCORE
 
-        total_solved = f.get("total_solved", 0)
-        dsa_score = min(math.log1p(total_solved) * 12, 50)
+        dsa_score = min(math.log1p(f.total_solved) * 12, 50)
 
         #CONSISTENCY SCORE
 
-        streak = f.get("streak", 0)
-        active_days = f.get("active_days", 0)
-
-        consistency_score = min(math.log1p(active_days) * 5 + streak * 0.5, 20)
-
-        #SKILL DEPTH SCORE
-
-        skill_stats = f.get("skill_stats", {})
-
-        dp = skill_stats.get("dynamic_programming", 0)
-        graphs = skill_stats.get("graph_theory", 0)
-        greedy = skill_stats.get("greedy_algorithms", 0)
-
-        skill_score = min(
-            (
-                math.log1p(dp) * 2 +
-                math.log1p(graphs) * 1.8 +
-                math.log1p(greedy) * 1.5
-            ),
+        consistency_score = min(
+            math.log1p(f.active_days) * 5 + f.streak * 0.5,
             20
         )
 
-        # 4. GITHUB SCORE
+         # -------------------
+        # SKILL SCORE (direct from leetcode)
+        # -------------------
+        skills = leetcode.skill_stats
 
-        repo_count = f.get("repo_count", 0)
-        stars = f.get("github_stars", 0)
-        followers = f.get("github_followers", 0)
+        dp = skills.get("dynamic_programming", 0)
+        graphs = skills.get("graph_theory", 0)
+        greedy = skills.get("greedy", 0)
 
+        skill_score = min(
+            math.log1p(dp) * 2 +
+            math.log1p(graphs) * 1.8 +
+            math.log1p(greedy) * 1.5,
+            20
+        )
+
+        # -------------------
+        # GITHUB SCORE
+        # -------------------
         github_score = min(
-            math.log1p(repo_count) * 3 +
-            math.log1p(stars) * 4 +
-            math.log1p(followers) * 2,
+            math.log1p(f.repo_count) * 3 +
+            math.log1p(f.github_stars) * 4 +
+            math.log1p(github.followers) * 2,
             10
         )
+        
         # -------------------
         # FINAL SCORE
         # -------------------
