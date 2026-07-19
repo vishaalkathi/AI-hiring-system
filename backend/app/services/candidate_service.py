@@ -1,18 +1,66 @@
-from backend.app.services.registry import AnalyzerRegistry
-from backend.app.services.candidate_aggregator import CandidateAggregator
+from fastapi import HTTPException, status
 
+from backend.app.db.repositories.candidate_repository import (
+    create_candidate_profile,
+    get_candidate_profile,
+    update_candidate_profile,
+    delete_candidate_profile,
+)
 
-class CandidateService:
+from backend.app.models.candidate import (
+    CandidateProfileCreate,
+    CandidateProfileUpdate,
+)
 
-    def build_candidate(self, username: str):
+def create_profile(user_id: str, profile: CandidateProfileCreate):
 
-        registry = AnalyzerRegistry()
-        raw_data = registry.run_all(username)
+    existing = get_candidate_profile(user_id)
 
-        aggregator = CandidateAggregator()
-        candidate = aggregator.aggregate(
-            raw_data.get("github", {}),
-            raw_data.get("leetcode", {})
+    if existing:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Candidate profile already exists."
         )
 
-        return candidate
+    return create_candidate_profile(user_id, profile)
+
+def get_profile(user_id: str):
+
+    profile = get_candidate_profile(user_id)
+
+    if not profile:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Candidate profile not found."
+        )
+
+    return profile
+
+def update_profile(
+    user_id: str,
+    profile: CandidateProfileUpdate,
+):
+
+    existing = get_candidate_profile(user_id)
+
+    if not existing:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Candidate profile not found."
+        )
+
+    return update_candidate_profile(user_id, profile)
+
+def delete_profile(user_id: str):
+
+    deleted = delete_candidate_profile(user_id)
+
+    if not deleted:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Candidate profile not found."
+        )
+
+    return {
+        "message": "Candidate profile deleted successfully."
+    }
