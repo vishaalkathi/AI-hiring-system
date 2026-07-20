@@ -5,7 +5,7 @@ from backend.app.core.security import decode_access_token
 from backend.app.db.repositories.user_repository import get_user_by_id
 
 from backend.app.models.auth import UserResponse
-from backend.app.models.auth import UserRole
+from backend.app.models.enums import UserRole
 
 oauth2_scheme = OAuth2PasswordBearer(
     tokenUrl="/api/auth/login"

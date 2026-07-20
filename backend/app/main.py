@@ -9,7 +9,7 @@ from backend.app.api.routes.match import router as match_router
 from backend.app.api.routes.auth import router as auth_router
 from backend.app.db.connection import (initialize_database, close_database)
 from backend.app.api.routes.candidate import router as candidate_router
-
+from backend.app.api.routes.employer import router as employer_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -30,7 +30,7 @@ app.include_router(candidate_router, prefix="/api")
 app.include_router(match_router, prefix="/api")
 app.include_router(auth_router,prefix="/api")
 app.include_router(candidate_router,prefix="/api",)
-
+app.include_router(employer_router,prefix="/api",)
 @app.get("/")
 def root():
     return {"message": "AI Hiring System Backend Running"}
