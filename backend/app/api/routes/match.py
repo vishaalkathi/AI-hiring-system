@@ -1,12 +1,12 @@
 from fastapi import APIRouter, HTTPException
 from backend.app.services.candidate_pipeline import CandidatePipeline
 from backend.app.services.job_matching_engine import JobMatchingEngine
-from backend.app.models.job import Job
+from backend.app.models.scoring import JobFeatures
 
 router = APIRouter()
 
 @router.post("/match/{username}")
-def match_candidate(username: str, job: Job):
+def match_candidate(username: str, job: JobFeatures):
 
     service = CandidateService()
     candidate = service.build_candidate(username)
