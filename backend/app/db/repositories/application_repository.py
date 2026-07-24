@@ -1,0 +1,165 @@
+from psycopg.rows import dict_row
+
+from backend.app.db.connection import get_connection
+
+from backend.app.models.application import (
+    ApplicationResponse,
+    ApplicationUpdate
+)
+
+def create_application(
+        candidate_user_id: str,
+        job_id: str,
+):
+    query = """
+        INSERT INTO applications
+        (
+            candidate_user_id,
+            job_id
+        )
+        VALUES (%s,%s)
+        RETURNING *;
+    """
+
+    with get_connection() as conn:
+        with conn.cursor(row_factory = dict_row) as cur:
+
+            cur.execute(
+                query,
+                (
+                    candidate_user_id,
+                    job_id,
+                ),
+            )
+
+            conn.commit()
+
+            return cur.fetchone()
+
+def application_exists(
+        candidate_user_id: str,
+        job_id: str
+):
+    query = """
+        SELECT 1
+        FROM applications
+        WHERE candidate_user_id = %s
+        AND job_id = %s;
+    """
+
+    with get_connection() as conn:
+        with conn.cursor(row_factory=dict_row) as cur:
+
+            cur.execute(
+                query,
+                (
+                    candidate_user_id,
+                    job_id,
+                ),
+            )
+
+            return cur.fetchone() is not None
+        
+def get_candidate_applications(candidate_user_id: str):
+    query = """
+        SELECT *
+        FROM applications
+        WHERE candidate_user_id = %s
+        ORDER BY created_at DESC;
+    """
+
+    with get_connection() as conn:
+        with conn.cursor(row_factory=dict_row) as cur:
+
+            cur.execute(
+                query,
+                (candidate_user_id,),
+            )
+
+            return cur.fetchall()
+
+
+def get_job_applications(job_id: str):
+    query = """
+        SELECT *
+        FROM applications
+        WHERE job_id = %s
+        ORDER BY created_at DESC;
+    """
+
+    with get_connection() as conn:
+        with conn.cursor(row_factory=dict_row) as cur:
+
+            cur.execute(
+                query,
+                (job_id,),
+            )
+
+            return cur.fetchall()
+
+
+def get_application_by_id(application_id: str):
+    query = """
+        SELECT *
+        FROM applications
+        WHERE application_id = %s;
+    """
+
+    with get_connection() as conn:
+        with conn.cursor(row_factory=dict_row) as cur:
+
+            cur.execute(
+                query,
+                (application_id,),
+            )
+
+            return cur.fetchone()
+
+
+def update_application_status(
+    application_id: str,
+    application: ApplicationUpdate,
+):
+    query = """
+        UPDATE applications
+        SET
+            application_status = %s,
+            updated_at = CURRENT_TIMESTAMP
+        WHERE application_id = %s
+        RETURNING *;
+    """
+
+    with get_connection() as conn:
+        with conn.cursor(row_factory=dict_row) as cur:
+
+            cur.execute(
+                query,
+                (
+                    application.application_status,
+                    application_id,
+                ),
+            )
+
+            conn.commit()
+
+            return cur.fetchone()
+
+
+def delete_application(application_id: str):
+    query = """
+        DELETE FROM applications
+        WHERE application_id = %s
+        RETURNING *;
+    """
+
+    with get_connection() as conn:
+        with conn.cursor(row_factory=dict_row) as cur:
+
+            cur.execute(
+                query,
+                (application_id,),
+            )
+
+            conn.commit()
+
+            return cur.fetchone()
