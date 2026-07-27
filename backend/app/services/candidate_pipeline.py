@@ -1,5 +1,5 @@
 from backend.app.services.registry import AnalyzerRegistry
-from backend.app.services.candidate_aggregator import CandidateAggregator
+from backend.app.services.candidate_feature_builder import build_candidate_features
 
 
 class CandidatePipeline:
@@ -9,7 +9,7 @@ class CandidatePipeline:
         registry = AnalyzerRegistry()
         raw_data = registry.run_all(username)
 
-        aggregator = CandidateAggregator()
+        aggregator = build_candidate_features()
         candidate = aggregator.aggregate(
             raw_data.get("github", {}),
             raw_data.get("leetcode", {})

@@ -3,7 +3,7 @@ from fastapi import APIRouter, HTTPException
 from backend.app.services.candidate_pipeline import CandidatePipeline
 from backend.app.services.scoring_engine_v1 import ScoringEngine
 
-from backend.app.models.scoring import Candidate
+from backend.app.models.features import Candidate
 
 router = APIRouter()
 

@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from backend.app.services.candidate_pipeline import CandidatePipeline
 from backend.app.services.job_matching_engine import JobMatchingEngine
-from backend.app.models.scoring import JobFeatures
+from backend.app.models.features import JobFeatures
 
 router = APIRouter()
 

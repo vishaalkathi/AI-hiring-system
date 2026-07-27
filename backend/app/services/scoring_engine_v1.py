@@ -1,5 +1,5 @@
 import math
-from backend.app.models.scoring import Candidate
+from backend.app.models.features import Candidate
 
 class ScoringEngine:
 
