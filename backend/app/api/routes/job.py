@@ -93,3 +93,10 @@ def delete_job_route(
 
     return delete_job_service(job_id)
 
+from backend.app.services.job_feature_builder import build_job_features
+
+@router.get("/{job_id}/features")
+def get_job_features(
+    job_id: str,
+):
+    return build_job_features(job_id)

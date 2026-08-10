@@ -5,7 +5,7 @@ from fastapi import FastAPI
 from backend.app.api.routes.github import router as github_router
 from backend.app.api.routes.leetcode import router as leetcode_router
 from backend.app.api.routes.scoring import router as scoring_router
-from backend.app.api.routes.match import router as match_router
+from backend.app.api.routes.job_matching import router as job_matching_router
 from backend.app.api.routes.auth import router as auth_router
 from backend.app.db.connection import (initialize_database, close_database)
 from backend.app.api.routes.candidate import router as candidate_router
@@ -29,7 +29,7 @@ app = FastAPI(lifespan = lifespan)
 app.include_router(github_router, prefix="/api")
 app.include_router(leetcode_router, prefix="/api")
 app.include_router(scoring_router, prefix="/api")
-app.include_router(match_router, prefix="/api")
+app.include_router(job_matching_router, prefix="/api")
 app.include_router(auth_router,prefix="/api")
 app.include_router(candidate_router,prefix="/api",)
 app.include_router(employer_router,prefix="/api",)

@@ -18,6 +18,19 @@ from backend.app.models.application import (
 
 from backend.app.models.auth import UserResponse
 
+from backend.app.services.candidate_feature_builder import (
+    build_candidate_features,
+)
+
+from backend.app.services.job_feature_builder import (
+    build_job_features,
+)
+
+from backend.app.services.job_matching_engine import (
+    MatchingEngine,
+)
+
+
 def create_application_service(
         current_user: UserResponse,
         job_id: str,
@@ -39,10 +52,30 @@ def create_application_service(
             detail="You have already applied for this job.",
         )
 
-    return create_application(
-        str(current_user.user_id),
-        job_id,
+    candidate_features = build_candidate_features(
+        str(current_user.user_id)
     )
+
+    job_features = build_job_features(job_id)
+
+    engine = JobMatchingEngine()
+
+    matching = engine.compute_match(
+        candidate_features,
+        job_features,
+    )
+
+    application = create_application(
+        candidate_user_id=str(current_user.user_id),
+        job_id=job_id,
+        match_score=matching["match_score"],
+    )
+
+    return {
+        "application": application,
+        "matching": matching,
+    }
+
 
 def get_my_applications_service(
     current_user: UserResponse,

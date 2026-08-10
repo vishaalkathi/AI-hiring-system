@@ -10,14 +10,16 @@ from backend.app.models.application import (
 def create_application(
         candidate_user_id: str,
         job_id: str,
+        match_score: float,
 ):
     query = """
         INSERT INTO applications
         (
             candidate_user_id,
-            job_id
+            job_id,
+            match_score
         )
-        VALUES (%s,%s)
+        VALUES (%s,%s,%s)
         RETURNING *;
     """
 
@@ -29,6 +31,7 @@ def create_application(
                 (
                     candidate_user_id,
                     job_id,
+                    match_score,
                 ),
             )
 

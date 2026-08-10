@@ -93,21 +93,20 @@ class Candidate(BaseModel):
 
 class JobFeatures(BaseModel):
     job_id: Optional[str] = None
+
     title: str
     description: str
 
-    job_type: str = "SDE"
-    experience_level: str = "entry"
+    location: Optional[str] = None
+    employment_type: Optional[str] = None
+    experience_required: Optional[str] = None
 
-    required_skills: Dict[str, int]
+    required_skills: List[str] = Field(
+        default_factory=list
+    )
 
-    preferred_languages: List[str] = []
+    preferred_skills: List[str] = Field(
+        default_factory=list
+    )
 
-    min_dsa_score: int = 0
-    min_github_score: int = 0
-
-    weights: Dict[str, float] = Field(default_factory=lambda: {
-        "dsa": 0.4,
-        "skills": 0.4,
-        "github": 0.2
-    })
+    status: str = "OPEN"
