@@ -1,4 +1,4 @@
-from pydantic import BaseModel,Field
+from pydantic import BaseModel, Field
 from typing import Dict, List, Optional
 
 
@@ -6,18 +6,21 @@ class GitHubFeatures(BaseModel):
     public_repos: int = 0
     followers: int = 0
     total_stars: int = 0
-    languages: List[str] = []
+    languages: List[str] = Field(default_factory=list)
     active_repos: int = 0
+
+    # Important: distinguish "no profile" from "empty profile"
+    available: bool = False
 
 
 class LeetCodeFeatures(BaseModel):
     language_diversity: int = 0
-    language_list: List[str] = []
+    language_list: List[str] = Field(default_factory=list)
 
     primary_language: Optional[str] = None
     primary_language_share: float = 0.0
 
-    skill_stats: Dict[str, int] = {}
+    skill_stats: Dict[str, int] = Field(default_factory=dict)
 
     contest_rating: float = 0.0
     contest_rank_percentile: float = 100.0
@@ -31,35 +34,27 @@ class LeetCodeFeatures(BaseModel):
     streak: int = 0
     active_days: int = 0
 
-# -------------------------
-# Combined ML Feature Vector
-# -------------------------
+    available: bool = False
+
+
 class CombinedFeatures(BaseModel):
 
-    # -------------------------
-    # Candidate Profile
-    # -------------------------
-
+    # Candidate profile
     current_location: Optional[str] = None
 
-    # -------------------------
-    # GitHub Features
-    # -------------------------
+    # Evidence availability
+    github_available: bool = False
+    leetcode_available: bool = False
 
+    # GitHub
     repo_count: int = 0
     github_followers: int = 0
     github_stars: int = 0
-
-    github_languages: List[str] = []
-
+    github_languages: List[str] = Field(default_factory=list)
     active_repos: int = 0
 
-    # -------------------------
-    # LeetCode Features
-    # -------------------------
-
+    # LeetCode
     total_solved: int = 0
-
     easy_solved: int = 0
     medium_solved: int = 0
     hard_solved: int = 0
@@ -68,7 +63,7 @@ class CombinedFeatures(BaseModel):
     active_days: int = 0
 
     language_diversity: int = 0
-    language_list: List[str] = []
+    language_list: List[str] = Field(default_factory=list)
 
     primary_language: Optional[str] = None
     primary_language_share: float = 0.0
@@ -77,12 +72,9 @@ class CombinedFeatures(BaseModel):
     contest_rank_percentile: float = 100.0
     contest_attended: int = 0
 
-    skill_stats: Dict[str, int] = {}
+    skill_stats: Dict[str, int] = Field(default_factory=dict)
 
 
-# -------------------------
-# FINAL CANDIDATE OBJECT (DELETE THIS LATER)
-# -------------------------
 class Candidate(BaseModel):
     username: str
 
@@ -90,6 +82,7 @@ class Candidate(BaseModel):
     leetcode: LeetCodeFeatures
 
     combined_features: CombinedFeatures
+
 
 class JobFeatures(BaseModel):
     job_id: Optional[str] = None

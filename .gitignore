@@ -18,4 +18,8 @@ node_modules/
 .DS_Store
 Thumbs.db
 
+# ML datasets
+ml/data/raw/
+ml/data/processed/
+
 backend/app/tests
