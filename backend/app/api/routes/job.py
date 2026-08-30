@@ -78,6 +78,7 @@ def update_job_route(
 
     return update_job_service(
         job_id,
+        current_user.user_id,
         job,
     )
 
@@ -91,7 +92,10 @@ def delete_job_route(
     current_user: UserResponse = Depends(get_current_employer),
 ):
 
-    return delete_job_service(job_id)
+    return delete_job_service(
+        job_id,
+        current_user.user_id,
+    )
 
 from backend.app.services.job_feature_builder import build_job_features
 

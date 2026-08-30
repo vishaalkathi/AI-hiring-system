@@ -1,235 +1,197 @@
-from fastapi import HTTPException, status
+import json
+from psycopg.rows import dict_row
 
-from backend.app.db.repositories.application_repository import (
-    create_application,
-    application_exists,
-    get_candidate_applications,
-    get_job_applications,
-    get_application_by_id,
-    update_application_status,
-)
-
-from backend.app.db.repositories.job_repository import (
-    get_job_by_id,
-)
-
-from backend.app.db.repositories.candidate_repository import (
-    get_candidate_profile,
-)
+from backend.app.db.connection import get_connection
 
 from backend.app.models.application import (
-    ApplicationUpdate,
+    ApplicationResponse,
+    ApplicationUpdate
 )
 
-from backend.app.models.auth import UserResponse
-
-from backend.app.services.candidate_feature_builder import (
-    build_candidate_features,
-)
-
-from backend.app.services.job_feature_builder import (
-    build_job_features,
-)
-
-from backend.app.services.job_matching_engine import (
-    JobMatchingEngine,
-)
-
-
-# ============================================================
-# CREATE APPLICATION
-# ============================================================
-
-def create_application_service(
-    current_user: UserResponse,
+def create_application(
+    candidate_user_id: str,
     job_id: str,
+    match_score: float,
+    resume_url_snapshot: str,
+    resume_text_snapshot: str,
+    parsed_role_snapshot: str,
+    parsed_skills_snapshot: list,
+    parsed_experience_snapshot: float,
 ):
-    candidate_user_id = str(current_user.user_id)
 
-    # --------------------------------------------------------
-    # Check job exists
-    # --------------------------------------------------------
+    query = """
+        INSERT INTO applications
+        (
+            candidate_user_id,
+            job_id,
+            match_score,
 
-    job = get_job_by_id(job_id)
-
-    if not job:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Job not found",
+            resume_url_snapshot,
+            resume_text_snapshot,
+            parsed_role_snapshot,
+            parsed_skills_snapshot,
+            parsed_experience_snapshot
         )
 
-    # --------------------------------------------------------
-    # Check candidate profile exists
-    # --------------------------------------------------------
-
-    candidate_profile = get_candidate_profile(
-        candidate_user_id
-    )
-
-    if not candidate_profile:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Candidate profile not found",
+        VALUES
+        (
+            %s,%s,%s,
+            %s,%s,%s,%s,%s
         )
 
-    # --------------------------------------------------------
-    # Prevent duplicate application
-    # --------------------------------------------------------
+        RETURNING *;
+    """
 
-    if application_exists(
-        candidate_user_id,
-        job_id,
-    ):
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="You have already applied for this job.",
-        )
+    with get_connection() as conn:
 
-    # --------------------------------------------------------
-    # Build candidate features
-    # --------------------------------------------------------
+        with conn.cursor(
+            row_factory=dict_row
+        ) as cur:
 
-    candidate_features = build_candidate_features(
-        candidate_user_id
-    )
+            cur.execute(
+                query,
+                (
+                    candidate_user_id,
+                    job_id,
+                    match_score,
 
-    # --------------------------------------------------------
-    # Build job features
-    # --------------------------------------------------------
+                    resume_url_snapshot,
+                    resume_text_snapshot,
+                    parsed_role_snapshot,
+                    json.dumps(parsed_skills_snapshot),
+                    parsed_experience_snapshot,
+                ),
+            )
 
-    job_features = build_job_features(
-        job_id
-    )
+            conn.commit()
 
-    # --------------------------------------------------------
-    # Calculate ML match
-    # --------------------------------------------------------
-
-    engine = JobMatchingEngine()
-
-    matching = engine.compute_match(
-        candidate_features.model_dump(),
-        job_features.model_dump(),
-    )
-
-    # --------------------------------------------------------
-    # Save application + immutable resume snapshot
-    # --------------------------------------------------------
-
-    application = create_application(
-        candidate_user_id=candidate_user_id,
-        job_id=job_id,
-
-        match_score=matching["match_score"],
-
-        resume_snapshot=(
-            candidate_features.resume
-        ),
-
-        parsed_role_snapshot=(
-            candidate_features.candidate_role
-        ),
-
-        parsed_skills_snapshot=(
-            candidate_features.candidate_skills
-        ),
-
-        parsed_experience_snapshot=(
-            candidate_features.candidate_experience
-        ),
-    )
-
-    # --------------------------------------------------------
-    # Return application + matching information
-    # --------------------------------------------------------
-
-    return {
-        "application": application,
-        "matching": matching,
-    }
+            return cur.fetchone()
 
 
-# ============================================================
-# GET MY APPLICATIONS
-# ============================================================
-
-def get_my_applications_service(
-    current_user: UserResponse,
+def application_exists(
+        candidate_user_id: str,
+        job_id: str
 ):
-    return get_candidate_applications(
-        str(current_user.user_id)
-    )
+    query = """
+        SELECT 1
+        FROM applications
+        WHERE candidate_user_id = %s
+        AND job_id = %s;
+    """
+
+    with get_connection() as conn:
+        with conn.cursor(row_factory=dict_row) as cur:
+
+            cur.execute(
+                query,
+                (
+                    candidate_user_id,
+                    job_id,
+                ),
+            )
+
+            return cur.fetchone() is not None
+        
+def get_candidate_applications(candidate_user_id: str):
+    query = """
+        SELECT *
+        FROM applications
+        WHERE candidate_user_id = %s
+        ORDER BY created_at DESC;
+    """
+
+    with get_connection() as conn:
+        with conn.cursor(row_factory=dict_row) as cur:
+
+            cur.execute(
+                query,
+                (candidate_user_id,),
+            )
+
+            return cur.fetchall()
 
 
-# ============================================================
-# GET APPLICATIONS FOR A JOB
-# ============================================================
+def get_job_applications(job_id: str):
+    query = """
+        SELECT *
+        FROM applications
+        WHERE job_id = %s
+        ORDER BY created_at DESC;
+    """
 
-def get_job_applications_service(
-    job_id: str,
-    current_user: UserResponse,
-):
-    job = get_job_by_id(job_id)
+    with get_connection() as conn:
+        with conn.cursor(row_factory=dict_row) as cur:
 
-    if not job:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Job not found",
-        )
+            cur.execute(
+                query,
+                (job_id,),
+            )
 
-    # Only the employer who owns the job can view applications
-
-    if str(job["employer_user_id"]) != str(
-        current_user.user_id
-    ):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized to view these applications.",
-        )
-
-    return get_job_applications(job_id)
+            return cur.fetchall()
 
 
-# ============================================================
-# UPDATE APPLICATION STATUS
-# ============================================================
+def get_application_by_id(application_id: str):
+    query = """
+        SELECT *
+        FROM applications
+        WHERE application_id = %s;
+    """
 
-def update_application_status_service(
+    with get_connection() as conn:
+        with conn.cursor(row_factory=dict_row) as cur:
+
+            cur.execute(
+                query,
+                (application_id,),
+            )
+
+            return cur.fetchone()
+
+
+def update_application_status(
     application_id: str,
     application: ApplicationUpdate,
-    current_user: UserResponse,
 ):
-    existing_application = get_application_by_id(
-        application_id
-    )
+    query = """
+        UPDATE applications
+        SET
+            application_status = %s,
+            updated_at = CURRENT_TIMESTAMP
+        WHERE application_id = %s
+        RETURNING *;
+    """
 
-    if not existing_application:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Application not found",
-        )
+    with get_connection() as conn:
+        with conn.cursor(row_factory=dict_row) as cur:
 
-    job = get_job_by_id(
-        str(existing_application["job_id"])
-    )
+            cur.execute(
+                query,
+                (
+                    application.application_status,
+                    application_id,
+                ),
+            )
 
-    if not job:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Job not found",
-        )
+            conn.commit()
 
-    # Only the employer who owns the job can update status
+            return cur.fetchone()
 
-    if str(job["employer_user_id"]) != str(
-        current_user.user_id
-    ):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized.",
-        )
 
-    return update_application_status(
-        application_id,
-        application,
-    )
+def delete_application(application_id: str):
+    query = """
+        DELETE FROM applications
+        WHERE application_id = %s
+        RETURNING *;
+    """
+
+    with get_connection() as conn:
+        with conn.cursor(row_factory=dict_row) as cur:
+
+            cur.execute(
+                query,
+                (application_id,),
+            )
+
+            conn.commit()
+
+            return cur.fetchone()

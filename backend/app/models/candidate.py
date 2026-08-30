@@ -28,7 +28,7 @@ class CandidateProfileResponse(BaseModel):
     predicted_score: Optional[float]
 
     parsed_role: Optional[str] = None
-    parsed_skills: List[str] = []
+    parsed_skills: Optional[List[str]] = None
     parsed_experience: Optional[float] = None
 
     resume_parsed_at: Optional[datetime] = None

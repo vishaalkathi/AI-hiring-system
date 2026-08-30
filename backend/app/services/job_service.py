@@ -19,6 +19,7 @@ def create_job_service(
         job.model_dump()
     )
 
+
 def get_job_service(job_id):
 
     job = get_job_by_id(job_id)
@@ -31,6 +32,7 @@ def get_job_service(job_id):
 
     return job
 
+
 def get_employer_jobs_service(
     employer_user_id
 ):
@@ -39,33 +41,55 @@ def get_employer_jobs_service(
         employer_user_id
     )
 
+
 def update_job_service(
     job_id,
+    employer_user_id,
     job
 ):
+
+    existing_job = get_job_by_id(job_id)
+
+    if not existing_job:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Job not found"
+        )
+
+    if str(existing_job["employer_user_id"]) != str(employer_user_id):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You are not authorized to modify this job."
+        )
 
     updated = update_job(
         job_id,
         job.model_dump(exclude_unset=True)
     )
 
-    if not updated:
-        raise HTTPException(
-            status_code=404,
-            detail="Job not found"
-        )
-
     return updated
 
-def delete_job_service(job_id):
 
-    deleted = delete_job(job_id)
+def delete_job_service(
+    job_id,
+    employer_user_id
+):
 
-    if not deleted:
+    existing_job = get_job_by_id(job_id)
+
+    if not existing_job:
         raise HTTPException(
-            status_code=404,
+            status_code=status.HTTP_404_NOT_FOUND,
             detail="Job not found"
         )
+
+    if str(existing_job["employer_user_id"]) != str(employer_user_id):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You are not authorized to delete this job."
+        )
+
+    deleted = delete_job(job_id)
 
     return {
         "message": "Job deleted successfully"
