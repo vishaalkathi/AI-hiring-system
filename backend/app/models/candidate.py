@@ -1,4 +1,5 @@
-from typing import Optional
+from datetime import datetime
+from typing import List, Optional
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, HttpUrl
@@ -25,6 +26,12 @@ class CandidateProfileResponse(BaseModel):
 
     resume_url: Optional[str]
     predicted_score: Optional[float]
+
+    parsed_role: Optional[str] = None
+    parsed_skills: List[str] = []
+    parsed_experience: Optional[float] = None
+
+    resume_parsed_at: Optional[datetime] = None
 
     model_config = ConfigDict(from_attributes=True)
 

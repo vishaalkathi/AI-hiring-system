@@ -1,4 +1,5 @@
 from psycopg.rows import dict_row
+import json
 
 from backend.app.db.connection import get_connection
 from backend.app.models.candidate import (
@@ -105,3 +106,42 @@ def delete_candidate_profile(user_id: str):
             conn.commit()
 
             return cur.rowcount > 0
+
+def update_resume_parsed_data(
+    user_id: str,
+    resume_text: str,
+    parsed_role: str,
+    parsed_skills: list,
+    parsed_experience: float,
+):
+
+    query = """
+        UPDATE candidate_profiles
+        SET
+            resume_text = %s,
+            parsed_role = %s,
+            parsed_skills = %s,
+            parsed_experience = %s,
+            resume_parsed_at = CURRENT_TIMESTAMP,
+            updated_at = CURRENT_TIMESTAMP
+        WHERE user_id = %s
+        RETURNING *;
+    """
+
+    with get_connection() as conn:
+        with conn.cursor(row_factory=dict_row) as cur:
+
+            cur.execute(
+                query,
+                (
+                    resume_text,
+                    parsed_role,
+                    json.dumps(parsed_skills),
+                    parsed_experience,
+                    user_id,
+                ),
+            )
+
+            conn.commit()
+
+            return cur.fetchone()

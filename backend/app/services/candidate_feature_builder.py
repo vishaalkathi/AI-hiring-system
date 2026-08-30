@@ -1,3 +1,5 @@
+import json
+
 from backend.app.models.features import CombinedFeatures
 
 from backend.app.db.repositories.candidate_repository import (
@@ -12,6 +14,25 @@ from backend.app.db.repositories.leetcode_repository import (
     get_leetcode_profile
 )
 
+def _normalize_list(value):
+    if value is None:
+        return []
+
+    if isinstance(value, list):
+        return value
+
+    if isinstance(value, str):
+        try:
+            parsed = json.loads(value)
+
+            if isinstance(parsed, list):
+                return parsed
+
+        except json.JSONDecodeError:
+            pass
+
+    return []
+
 def build_candidate_features(user_id: str) -> CombinedFeatures:
 
     candidate = get_candidate_profile(user_id) or {}
@@ -20,16 +41,36 @@ def build_candidate_features(user_id: str) -> CombinedFeatures:
 
     leetcode = get_leetcode_profile(user_id) or {}
 
+    skill_stats = leetcode.get("skill_stats", {}) or {}
     return CombinedFeatures(
 
         # Candidate
         current_location=candidate.get("current_location"),
 
+        #Resume
+        resume=candidate.get("resume_text") or "",
+        candidate_role=candidate.get("parsed_role") or "",
+        candidate_skills= _normalize_list(
+            candidate.get("parsed_skills")
+        ),
+        candidate_experience=float(
+            candidate.get("parsed_experience") or 0
+        ),
+
+        # Evidence availability
+        github_available=bool(github),
+        leetcode_available=bool(leetcode),
+
         # GitHub
         repo_count=github.get("public_repos", 0),
         github_followers=github.get("followers", 0),
         github_stars=github.get("total_stars", 0),
-        github_languages=github.get("languages", []),
+        github_languages=_normalize_list(
+            github.get("languages")
+        ),
+        active_repos=github.get(
+            "active_repos", 0
+        ),
 
         # LeetCode
         total_solved=leetcode.get("total_solved", 0),
@@ -42,7 +83,9 @@ def build_candidate_features(user_id: str) -> CombinedFeatures:
         active_days=leetcode.get("active_days", 0),
 
         language_diversity=leetcode.get("language_diversity", 0),
-        language_list=leetcode.get("language_list", []),
+        language_list=_normalize_list(
+            leetcode.get("language_list")
+        ),
 
         primary_language=leetcode.get("primary_language"),
         primary_language_share=leetcode.get(
@@ -58,4 +101,10 @@ def build_candidate_features(user_id: str) -> CombinedFeatures:
         contest_attended=leetcode.get("contest_attended", 0),
 
         skill_stats=leetcode.get("skill_stats", {}),
+
+        dp_strength = skill_stats.get("dynamic_programming", 0),
+        graph_strength = skill_stats.get("graph_theory", 0),
+        greedy_strength = skill_stats.get("greedy", 0),
+        tree_strength = skill_stats.get("tree", 0),
+        binary_search_strength = skill_stats.get("binary_search", 0),
     )

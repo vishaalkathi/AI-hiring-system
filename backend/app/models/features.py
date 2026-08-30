@@ -42,6 +42,12 @@ class CombinedFeatures(BaseModel):
     # Candidate profile
     current_location: Optional[str] = None
 
+    # Resume
+    resume: str = ""
+    candidate_role: str = ""
+    candidate_skills: List[str] = Field(default_factory=list)
+    candidate_experience: float = 0.0
+
     # Evidence availability
     github_available: bool = False
     leetcode_available: bool = False
@@ -74,6 +80,12 @@ class CombinedFeatures(BaseModel):
 
     skill_stats: Dict[str, int] = Field(default_factory=dict)
 
+    # DSA strengths
+    dp_strength: float = 0.0
+    graph_strength: float = 0.0
+    greedy_strength: float = 0.0
+    tree_strength: float = 0.0
+    binary_search_strength: float = 0.0
 
 class Candidate(BaseModel):
     username: str
@@ -92,7 +104,7 @@ class JobFeatures(BaseModel):
 
     location: Optional[str] = None
     employment_type: Optional[str] = None
-    experience_required: Optional[str] = None
+    experience_required: float = 0.0
 
     required_skills: List[str] = Field(
         default_factory=list

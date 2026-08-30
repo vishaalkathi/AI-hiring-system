@@ -6,3 +6,5 @@ pdfplumber
 pandas
 numpy
 xgboost
+ollama
+tqdm

@@ -23,3 +23,7 @@ ml/data/raw/
 ml/data/processed/
 
 backend/app/tests
+
+# ML models
+ml/models/*.joblib
+ml/v2/models/*.joblib

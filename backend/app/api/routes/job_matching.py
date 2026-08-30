@@ -38,8 +38,8 @@ def match_candidate(
         engine = MatchingEngine()
 
         match = engine.calculate_match_score(
-            candidate,
-            job,
+            candidate.model_dump(),
+            job.model_dump(),
         )
 
         return {

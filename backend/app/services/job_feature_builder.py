@@ -1,3 +1,4 @@
+import re
 from fastapi import HTTPException, status
 
 from backend.app.db.repositories.job_repository import (
@@ -6,6 +7,100 @@ from backend.app.db.repositories.job_repository import (
 
 from backend.app.models.features import JobFeatures
 
+def parse_required_experience(value) -> float:
+
+    if value is None:
+        return 0.0
+
+    if isinstance(value, (int, float)):
+        return max(0.0, float(value))
+
+    text = str(value).strip().lower()
+
+    if not text:
+        return 0.0
+
+    # --------------------------------------------------------
+    # Fresher / entry-level
+    # --------------------------------------------------------
+
+    if any(word in text for word in [
+        "fresher",
+        "entry level",
+        "entry-level",
+        "no experience",
+        "0 year",
+        "0 years",
+    ]):
+        return 0.0
+
+    # --------------------------------------------------------
+    # Ranges
+    # Handle BEFORE normal year extraction
+    #
+    # "3-5 years" -> 3.0
+    # "2 to 4 years" -> 2.0
+    # --------------------------------------------------------
+
+    range_match = re.search(
+        r"(\d+(?:\.\d+)?)\s*(?:-|to)\s*(\d+(?:\.\d+)?)",
+        text
+    )
+
+    if range_match:
+        return max(
+            0.0,
+            float(range_match.group(1))
+        )
+
+    # --------------------------------------------------------
+    # Years + months
+    #
+    # "1 year 6 months" -> 1.5
+    # "2 years" -> 2.0
+    # --------------------------------------------------------
+
+    year_match = re.search(
+        r"(\d+(?:\.\d+)?)\s*(?:years?|yrs?)",
+        text
+    )
+
+    month_match = re.search(
+        r"(\d+(?:\.\d+)?)\s*(?:months?|mos?)",
+        text
+    )
+
+    years = (
+        float(year_match.group(1))
+        if year_match
+        else 0.0
+    )
+
+    months = (
+        float(month_match.group(1))
+        if month_match
+        else 0.0
+    )
+
+    if year_match or month_match:
+        return max(
+            0.0,
+            years + (months / 12.0)
+        )
+
+    # --------------------------------------------------------
+    # Plain number
+    # --------------------------------------------------------
+
+    number_match = re.search(
+        r"\d+(?:\.\d+)?",
+        text
+    )
+
+    if number_match:
+        return float(number_match.group(0))
+
+    return 0.0
 
 def build_job_features(job_id: str) -> JobFeatures:
     """
@@ -30,8 +125,8 @@ def build_job_features(job_id: str) -> JobFeatures:
         description=job["description"],
         location=job.get("location"),
         employment_type=job.get("employment_type"),
-        experience_required=job.get(
-            "experience_required"
+        experience_required=parse_required_experience(
+            job.get("experience_required")
         ),
         required_skills=required_skills,
         preferred_skills=preferred_skills,
