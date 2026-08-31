@@ -8,3 +8,7 @@ numpy
 xgboost
 ollama
 tqdm
+boto3
+pypdf
+python-multipart
+python-docx

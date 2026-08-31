@@ -11,6 +11,9 @@ from backend.app.models.candidate import (
     CandidateProfileCreate,
     CandidateProfileUpdate,
 )
+from backend.app.services.s3_service import (
+    generate_resume_url,
+)
 
 def create_profile(user_id: str, profile: CandidateProfileCreate):
 
@@ -33,6 +36,16 @@ def get_profile(user_id: str):
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Candidate profile not found."
         )
+
+    resume_key = profile.get(
+        "resume_s3_key"
+    )
+
+    profile["resume_url"] = (
+        generate_resume_url(resume_key)
+        if resume_key
+        else None
+    )
 
     return profile
 

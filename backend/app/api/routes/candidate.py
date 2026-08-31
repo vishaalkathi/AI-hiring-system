@@ -1,4 +1,11 @@
-from fastapi import APIRouter, Depends
+from fastapi import (
+    APIRouter,
+    Depends,
+    UploadFile,
+    File,
+    HTTPException,
+    status,
+)
 
 from backend.app.api.dependencies import get_current_candidate
 
@@ -14,6 +21,11 @@ from backend.app.services.candidate_service import (
     get_profile,
     update_profile,
     delete_profile,
+)
+
+from backend.app.services.resume_service import (
+    upload_resume_service,
+    delete_resume_service,
 )
 
 router = APIRouter(
@@ -71,3 +83,30 @@ def delete_candidate_profile_route(
 ):
 
     return delete_profile(current_user.user_id)
+
+
+
+#UPLOAD RESUME
+
+@router.post(
+    "/resume"
+)
+def upload_resume_route(
+    file: UploadFile = File(...),
+    current_user: UserResponse = Depends(get_current_candidate),
+):
+    return upload_resume_service(
+        current_user.user_id,
+        file,
+    )
+
+@router.delete(
+    "/resume",
+)
+def delete_resume_route(
+    current_user: UserResponse = Depends(get_current_candidate),
+):
+
+    return delete_resume_service(
+        current_user.user_id
+    )

@@ -12,7 +12,7 @@ def create_application(
     candidate_user_id: str,
     job_id: str,
     match_score: float,
-    resume_url_snapshot: str,
+    resume_s3_key_snapshot: str,
     resume_text_snapshot: str,
     parsed_role_snapshot: str,
     parsed_skills_snapshot: list,
@@ -26,7 +26,7 @@ def create_application(
             job_id,
             match_score,
 
-            resume_url_snapshot,
+            resume_s3_key_snapshot,
             resume_text_snapshot,
             parsed_role_snapshot,
             parsed_skills_snapshot,
@@ -55,7 +55,7 @@ def create_application(
                     job_id,
                     match_score,
 
-                    resume_url_snapshot,
+                    resume_s3_key_snapshot,
                     resume_text_snapshot,
                     parsed_role_snapshot,
                     json.dumps(parsed_skills_snapshot),

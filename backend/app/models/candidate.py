@@ -24,7 +24,7 @@ class CandidateProfileResponse(BaseModel):
     linkedin_url: Optional[HttpUrl]
     portfolio_url: Optional[HttpUrl]
 
-    resume_url: Optional[str]
+    resume_s3_key: Optional[str] = None
     predicted_score: Optional[float]
 
     parsed_role: Optional[str] = None

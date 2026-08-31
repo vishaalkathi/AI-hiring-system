@@ -109,6 +109,7 @@ def delete_candidate_profile(user_id: str):
 
 def update_resume_parsed_data(
     user_id: str,
+    resume_s3_key: str,
     resume_text: str,
     parsed_role: str,
     parsed_skills: list,
@@ -118,6 +119,7 @@ def update_resume_parsed_data(
     query = """
         UPDATE candidate_profiles
         SET
+            resume_s3_key = %s,
             resume_text = %s,
             parsed_role = %s,
             parsed_skills = %s,
@@ -134,12 +136,42 @@ def update_resume_parsed_data(
             cur.execute(
                 query,
                 (
+                    resume_s3_key,
                     resume_text,
                     parsed_role,
                     json.dumps(parsed_skills),
                     parsed_experience,
                     user_id,
                 ),
+            )
+
+            conn.commit()
+
+            return cur.fetchone()
+
+def clear_resume_data(
+    user_id: str,
+):
+    query = """
+        UPDATE candidate_profiles
+        SET
+            resume_s3_key = NULL,
+            resume_text = NULL,
+            parsed_role = NULL,
+            parsed_skills = NULL,
+            parsed_experience = NULL,
+            resume_parsed_at = NULL,
+            updated_at = CURRENT_TIMESTAMP
+        WHERE user_id = %s
+        RETURNING *;
+    """
+
+    with get_connection() as conn:
+        with conn.cursor(row_factory=dict_row) as cur:
+
+            cur.execute(
+                query,
+                (user_id,),
             )
 
             conn.commit()

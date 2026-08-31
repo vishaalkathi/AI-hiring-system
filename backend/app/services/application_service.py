@@ -121,8 +121,8 @@ def create_application_service(
         job_id=job_id,
         match_score=matching["match_score"],
 
-        resume_url_snapshot=(
-            candidate_profile.get("resume_url")
+        resume_s3_key_snapshot=(
+            candidate_profile.get("resume_s3_key")
         ),
 
         resume_text_snapshot=(

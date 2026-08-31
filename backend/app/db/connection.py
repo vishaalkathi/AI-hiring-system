@@ -10,7 +10,7 @@ pool = ConnectionPool(
     max_size = 10,
     open = False
 )
-print("DATABASE:", DATABASE_URL)
+
 def initialize_database():
     """
     Initialize the PostgreSQL database connection pool.
